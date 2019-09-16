@@ -249,14 +249,8 @@ if user_want_to_change:
     mutation_rate = data[3]
 ###########################################################
 # call the algorithm
-result_per_iteration = []
-for i in range(iterations):
-    result = genetics_algorithm()
-    result_per_iteration.append(result)
+# call the algorithm
+result = genetics_algorithm()
 output_file = "Output_SGA.txt"
 with open(output_file, "w") as out_file:
-    for i in range(iterations):
-        out_file.write(
-            "Iteration: {}==============================\n".format(i+1))
-        out_file.write(result_per_iteration[i])
-        out_file.write("///////////////////////////////////////\n")
+    out_file.write(result)
