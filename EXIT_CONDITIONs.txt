@@ -1,1 +1,0 @@
-MAX_generation = 3000, Max_ReStart = 100.
