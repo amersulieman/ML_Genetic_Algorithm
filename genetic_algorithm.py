@@ -2,11 +2,13 @@
     @author: Amer Sulieman
     @version: 09/15/2019
 '''
-
 from Chromosome import Chromosome
 import random
 import math
 import numpy as np
+import os.path as path
+from custom_config import ask_user_for_their_choice as user_choice
+from custom_config import get_config_values_from_user as user_data
 
 
 def calc_num_elites(pop_size, elites_rate):
@@ -72,8 +74,8 @@ def copy_elites(num_elites, previous_population, next_population):
 def roulette_wheel(population):
     '''
         Calculate the probability for each chromosome to be picked
-        For crossover. 
-        Add up all the fitnesses and dived each chromosome by total 
+        For crossover.
+        Add up all the fitnesses and dived each chromosome by total
         to get probability
     '''
     all_fitnesses = [chromosome.fitness for chromosome in population]
@@ -89,12 +91,12 @@ def __swap_beta_partially(bit_location, chromA_beta, chromeB_beta):
         This is a helper function for swapping bits within a beta.
         For example if the random bit picked for swapping is within
         a beta range, like bit 5 . Then for chromosomeA beta's bits after 5
-        And chromosomeB beta's bits after 5 should be swapped. 
+        And chromosomeB beta's bits after 5 should be swapped.
     '''
     # mask to help us know which bits are not swapped
     mask_size = NUM_BITS - bit_location - 1
     mask = (2**mask_size) - 1
-    ''' 
+    '''
         Get the bits we do not swap
         Example,if binary of 6 -> 0110
         We swap at location 2 <- this is index of bits
@@ -184,30 +186,16 @@ def mutation(mutations, chromosome_size, population_size, population):
         chromosome.vector[beta_location] ^= (1 << bit_to_change)
 
 
-generations = 3000
-population_size = 200
-NUM_BETAS = 10
-NUM_BITS = 16
-elites_rate = 0.05
-cross_over_rate = 0.80
-mutation_rate = 0.10
-chromosome_size = NUM_BETAS * NUM_BITS
-mutations = int(mutation_rate * population_size)
-num_cross_overs = int(population_size * cross_over_rate)
-num_of_elites = calc_num_elites(population_size, elites_rate)
-exit_condition = 0.10 * population_size
-
-
 def genetics_algorithm():
 
-    unchanging_best_fitness = 0
-
+    # used to track how many generations's best fitness does not change
+    no_change_tracker = 0
     population = initialize()
     population.sort(reverse=True)
-    print("Generation 0: {}".format(population[0]))
-
+    result = ""
+    result += "Generation= 0, Fitness= {}\n".format(population[0])
     generation = 1
-    while generation < (generations+1) and unchanging_best_fitness < exit_condition:
+    while generation < (generations+1) and no_change_tracker < num_no_change_condition:
         next_population = create_population()
         copy_elites(num_of_elites, population, next_population)
         elite_location = num_of_elites - 1
@@ -226,12 +214,49 @@ def genetics_algorithm():
             chromosome.fitness = calc_fitness(chromosome.vector)
         next_population.sort(reverse=True)
         if population[0] == next_population[0]:
-            unchanging_best_fitness += 1
+            no_change_tracker += 1
         else:
-            unchanging_best_fitness = 0
+            no_change_tracker = 0
         population = next_population[:]
-        print("Generation {}: {}".format(generation, population[0]))
+        result += "Generation= {}, Fitness= {}\n".format(
+            generation, population[0])
         generation += 1
+    return result
 
 
-genetics_algorithm()
+# The following all are necessary data for the algorithm
+generations = 100
+iterations = 5
+# default values
+population_size = 200
+elites_rate = 0.05
+cross_over_rate = 0.80
+mutation_rate = 0.10
+NUM_BETAS = 10
+NUM_BITS = 16
+chromosome_size = NUM_BETAS * NUM_BITS
+mutations = int(mutation_rate * population_size)
+num_cross_overs = int(population_size * cross_over_rate)
+num_of_elites = calc_num_elites(population_size, elites_rate)
+num_no_change_condition = 0.10 * population_size
+# check if user want to change default values
+user_want_to_change = user_choice()
+if user_want_to_change:
+    data = user_data()
+    population_size = data[0]
+    elites_rate = data[1]
+    cross_over_rate = data[2]
+    mutation_rate = data[3]
+###########################################################
+# call the algorithm
+result_per_iteration = []
+for i in range(iterations):
+    result = genetics_algorithm()
+    result_per_iteration.append(result)
+output_file = "Output_SGA.txt"
+with open(output_file, "w") as out_file:
+    for i in range(iterations):
+        out_file.write(
+            "Iteration: {}==============================\n".format(i+1))
+        out_file.write(result_per_iteration[i])
+        out_file.write("///////////////////////////////////////\n")
